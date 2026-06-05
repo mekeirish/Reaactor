@@ -1,16 +1,15 @@
 {
-  "name": "Reaactor",
-  "short_name": "Reaactor",
-  "start_url": "./index.html",
+  "name": "React App",
+  "short_name": "React App",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#1a1c20",
-  "theme_color": "#4b6cb7",
+  "theme_color": "#030712",
+  "background_color": "#030712",
   "icons": [
     {
       "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
