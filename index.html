@@ -23,7 +23,6 @@
         .dark-toggle { background: var(--btn-bg); padding: 0.3rem 0.8rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; font-size: 0.85rem; color: var(--btn-text); box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); border: none; }
         label { font-weight: 600; color: var(--accent); font-size: 0.75rem; display: block; margin: 0.5rem 0 0.2rem; }
         input, textarea { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; background: var(--code-bg); color: var(--text); font-family: monospace; font-size: 0.75rem; resize: vertical; box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
-        /* Zone code + boutons */
         .code-area-wrapper {
             display: flex;
             gap: 0.5rem;
@@ -64,8 +63,6 @@
         .square-btn:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); transform: scale(0.98); }
         .square-btn.primary { background: var(--accent); color: white; }
         .btn-test-green { color: #10b981; }
-        
-        /* Les trois textareas (manifest, sw) */
         .inline-textareas {
             display: flex;
             gap: 0.8rem;
@@ -91,8 +88,6 @@
         .preview { text-align: center; margin-top: 0.5rem; }
         .preview img { max-width: 80px; border-radius: 0.5rem; margin: 0 auto; }
         .footer { text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.7rem; }
-
-        /* Boutons pour manifest/sw */
         .dot-button {
             display: inline-flex;
             align-items: center;
@@ -119,8 +114,6 @@
         }
         .dot.green { background-color: #10b981; box-shadow: 0 0 6px #10b981; }
         .files-tools { display: flex; gap: 0.8rem; margin: 0.5rem 0; }
-
-        /* Petit bouton token carré (aligné avec l'input) */
         .token-paste-btn {
             width: 36px;
             height: 36px;
@@ -141,8 +134,6 @@
         .repo-line { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
         .repo-line .repo-field { flex: 1; }
         #githubToken { display: none; }
-
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -167,8 +158,6 @@
         .modal-content textarea { flex: 1; margin: 0.5rem 0; min-height: 200px; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
         .hidden-textarea { display: none; }
-
-        /* Correction plein écran : aucun bord blanc */
         #previewContainer:fullscreen {
             background: black !important;
             margin: 0 !important;
@@ -194,8 +183,6 @@
             align-items: center;
             justify-content: center;
         }
-
-        /* Correction des couleurs des champs de saisie en mode sombre */
         body.dark input,
         body.dark textarea,
         body.dark input::file-selector-button {
@@ -218,7 +205,6 @@
             padding: 0.25rem 0.75rem;
             margin-right: 0.5rem;
         }
-
         @media (max-width: 640px) {
             .square-btn {
                 width: 70px;
@@ -226,15 +212,13 @@
             }
         }
     </style>
-
-    <!-- PWA Config Autoinjected -->
     <link rel="manifest" href="./manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4b6cb7">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png">
-    
+
 <link rel="manifest" href="./manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#4b6cb7">
@@ -245,11 +229,7 @@
 <body>
 <div class="card">
     <h1>⚛️ LB Reaactor <button class="dark-toggle" id="darkModeToggle">🌙 Dark</button></h1>
-    
-    <!-- Token GitHub caché -->
     <input type="password" id="githubToken" placeholder="ghp_...">
-    
-    <!-- Zone de code React avec boutons coller/test -->
     <div class="code-area-wrapper">
         <div class="file-card">
             <div class="file-header">📝 Code React (JSX/TSX)</div>
@@ -260,23 +240,15 @@
             <button id="runPreviewBtn" class="square-btn btn-test-green" style="font-weight: bold;">Test</button>
         </div>
     </div>
-    
-    <!-- Boutons pour manifest et sw -->
     <div class="files-tools">
         <button id="btnManifest" class="dot-button"><span class="dot" id="dotManifest"></span> manifest.json</button>
         <button id="btnSw" class="dot-button"><span class="dot" id="dotSw"></span> sw.js</button>
     </div>
-    
-    <!-- Textareas cachés pour stocker les contenus -->
     <textarea id="manifestPreview" class="hidden-textarea"></textarea>
     <textarea id="swPreview" class="hidden-textarea"></textarea>
-    
-    <!-- Zone d'aperçu -->
     <div id="previewContainer" class="result">
         <div id="previewArea">Aperçu</div>
     </div>
-    
-    <!-- Ligne du dépôt et token -->
     <div class="repo-line">
         <div id="tokenPasteBtn" class="token-paste-btn" title="Coller le token GitHub (presse-papiers)">🔑</div>
         <div class="repo-field">
@@ -284,22 +256,17 @@
             <input type="text" id="repoName" value="">
         </div>
     </div>
-    
     <label>🖼️ Icône de la PWA (PNG/JPG)</label>
     <input type="file" id="iconInput" accept="image/png,image/jpeg" style="padding: 0.3rem;">
     <div id="previewIcon" class="preview"></div>
-    
     <div class="button-bar" style="display: flex; justify-content: center; margin-top: 0.5rem;">
         <button id="deployBtn" style="background: var(--accent); color: white; padding: 0.6rem 1.2rem;">🚀 Deploy</button>
     </div>
-    
     <div id="checklistContainer" class="checklist" style="display:none;"></div>
     <div id="finalLinkContainer" style="text-align:center"></div>
     <div id="status" class="result" style="text-align:center; font-weight:bold;">Statut : Prêt.</div>
     <div class="footer">Made by Laiche Brahim 2026 Paris</div>
 </div>
-
-<!-- Modal d'édition -->
 <div id="editorModal" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle">Édition</h3>
@@ -310,7 +277,6 @@
         </div>
     </div>
 </div>
-
 <script>
     // --- Gestion UI & Thème : mode sombre par défaut ---
     const toggleDark = document.getElementById('darkModeToggle');
@@ -524,11 +490,10 @@
         } catch (err) { throw new Error(err.message); }
     }
     
-    // Assure que Babel est chargé (pour le déploiement)
     let babelLoaded = false;
     function ensureBabel() {
         if (typeof Babel !== 'undefined') return Promise.resolve();
-        if (babelLoaded) return Promise.resolve(); // déjà en cours
+        if (babelLoaded) return Promise.resolve();
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js';
@@ -565,50 +530,79 @@
         }
     }
     
-    // Gestion du plein écran sans bordures + long press pour quitter
-    let fullscreenLongPressTimer = null;
+    // --- Gestion plein écran avec swipe vers le bas pour sortir (pull-to-refresh) ---
+    let touchStartY = 0;
+    let isAtTop = true;
+    
+    function checkIfScrollTop() {
+        // Vérifie si le contenu de l'aperçu (previewArea ou previewRoot) est en haut
+        const previewRootElem = document.getElementById('previewRoot');
+        if (previewRootElem && previewRootElem.scrollTop > 0) {
+            isAtTop = false;
+            return;
+        }
+        // Sinon, regarde le document ou le body
+        if (window.scrollY > 0) {
+            isAtTop = false;
+            return;
+        }
+        isAtTop = true;
+    }
+    
+    function handleTouchStart(e) {
+        if (!document.fullscreenElement) return;
+        touchStartY = e.touches[0].clientY;
+        // Vérifier la position de scroll au début
+        checkIfScrollTop();
+    }
+    
+    function handleTouchMove(e) {
+        if (!document.fullscreenElement) return;
+        const touchCurrentY = e.touches[0].clientY;
+        const deltaY = touchCurrentY - touchStartY;
+        // Si on swip vers le bas (deltaY > 0) et qu'on est tout en haut
+        if (deltaY > 30 && isAtTop) {
+            // Empêcher le comportement par défaut (pull-to-refresh du navigateur)
+            e.preventDefault();
+            // Quitter le plein écran
+            document.exitFullscreen();
+        }
+    }
+    
+    function attachSwipeToExit() {
+        const container = previewContainerDiv;
+        container.addEventListener('touchstart', handleTouchStart, { passive: false });
+        container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+    
+    function detachSwipeToExit() {
+        const container = previewContainerDiv;
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+    }
+    
     function toggleFullscreenPreview() {
         if (!previewContainerDiv) return;
         if (!document.fullscreenElement) {
             previewContainerDiv.requestFullscreen().catch(e => console.warn(e));
-            const previewElem = document.getElementById('previewArea');
-            if (previewElem) {
-                const startLongPress = (e) => {
-                    fullscreenLongPressTimer = setTimeout(() => {
-                        if (document.fullscreenElement) {
-                            document.exitFullscreen();
-                        }
-                    }, 500);
-                };
-                const cancelLongPress = () => {
-                    if (fullscreenLongPressTimer) {
-                        clearTimeout(fullscreenLongPressTimer);
-                        fullscreenLongPressTimer = null;
-                    }
-                };
-                previewElem.addEventListener('touchstart', startLongPress);
-                previewElem.addEventListener('touchend', cancelLongPress);
-                previewElem.addEventListener('touchmove', cancelLongPress);
-                previewElem.addEventListener('touchcancel', cancelLongPress);
-                previewElem.addEventListener('mousedown', startLongPress);
-                previewElem.addEventListener('mouseup', cancelLongPress);
-                const fullscreenChangeHandler = () => {
-                    if (!document.fullscreenElement) {
-                        previewElem.removeEventListener('touchstart', startLongPress);
-                        previewElem.removeEventListener('touchend', cancelLongPress);
-                        previewElem.removeEventListener('touchmove', cancelLongPress);
-                        previewElem.removeEventListener('touchcancel', cancelLongPress);
-                        previewElem.removeEventListener('mousedown', startLongPress);
-                        previewElem.removeEventListener('mouseup', cancelLongPress);
-                        document.removeEventListener('fullscreenchange', fullscreenChangeHandler);
-                    }
-                };
-                document.addEventListener('fullscreenchange', fullscreenChangeHandler);
-            }
+            // Attacher les écouteurs après l'entrée en plein écran
+            setTimeout(() => {
+                if (document.fullscreenElement) {
+                    attachSwipeToExit();
+                }
+            }, 100);
         } else {
             document.exitFullscreen();
+            detachSwipeToExit();
         }
     }
+    
+    // Nettoyer à la sortie du plein écran
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            detachSwipeToExit();
+        }
+    });
     
     runPreviewBtn.addEventListener('click', () => { ensureReactAndRun(); toggleFullscreenPreview(); });
     
@@ -666,9 +660,7 @@
         if (!token || !repo || !code || !uploadedImage) return showError("Token, dépôt, code et icône requis.");
         deployBtn.disabled = true; resetChecklist(); finalLinkContainer.innerHTML = ''; showMessage("🚀 Déploiement...");
         try {
-            // Charger Babel si nécessaire (pour la compilation JSX)
             await ensureBabel();
-            
             updateChecklist('token','pending'); const owner = await getGitHubUser(token); updateChecklist('token','success',`@${owner}`);
             updateChecklist('icons','pending'); const iconsMap = await generateIcons(uploadedImage); updateChecklist('icons','success',`${iconsMap.size} icônes`);
             updateChecklist('repo','pending'); try { await createRepo(owner, repo, token); updateChecklist('repo','success','créé'); } catch(e) { if (e.message === 'EXISTS') updateChecklist('repo','success','existant'); else throw e; }
@@ -696,18 +688,16 @@
     updateTokenButton();
     syncOriginalContents();
 </script>
-
-    <!-- PWA Service Worker Autoinjected -->
-    <script>
-      if ('serviceWorker' in navigator) {
+<script>
+    if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Reaactorbeta SW enregistré avec succès !'))
-            .catch(err => console.error('Erreur d’enregistrement du SW :', err));
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Reaactorbeta SW enregistré avec succès !'))
+                .catch(err => console.error('Erreur d’enregistrement du SW :', err));
         });
-      }
-    </script>
-    
+    }
+</script>
+
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
