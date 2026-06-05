@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>LB Reaactor · Édition équilibrée</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.2s ease, color 0.2s ease; }
+        :root {
+            --bg: #eef0f3; --card: #eef0f3; --text: #1e2a3a; --text-light: #4a627a;
+            --accent: #2c7da0; --btn-bg: #eef0f3; --btn-text: #1e2a3a;
+            --code-bg: #ffffff; --shadow-light: #ffffff; --shadow-dark: #d1d9e6;
+            --modal-bg: #ffffffcc; --modal-backdrop: rgba(0,0,0,0.3);
+        }
+        body.dark {
+            --bg: #1a1e24; --card: #1a1e24; --text: #e2e8f0; --text-light: #9aaebf;
+            --accent: #5bc0de; --btn-bg: #1e293b; --btn-text: #f1f5f9;
+            --code-bg: #0f172a; --shadow-light: #242933; --shadow-dark: #101318;
+            --modal-bg: #1e293bcc; --modal-backdrop: rgba(0,0,0,0.7);
+        }
+        body { background: var(--bg); font-family: system-ui; padding: 1rem; }
+        .card { max-width: 1100px; margin: auto; background: var(--card); border-radius: 1rem; padding: 1rem; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); }
+        h1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--text); font-size: 1.4rem; font-weight: bold; }
+        .dark-toggle { background: var(--btn-bg); padding: 0.3rem 0.8rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; font-size: 0.85rem; color: var(--btn-text); box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); border: none; }
+        label { font-weight: 600; color: var(--accent); font-size: 0.75rem; display: block; margin: 0.5rem 0 0.2rem; }
+        input, textarea { width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: none; background: var(--code-bg); color: var(--text); font-family: monospace; font-size: 0.75rem; resize: vertical; box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+        /* Zone code + boutons */
+        .code-area-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+            margin: 0.5rem 0;
+        }
+        .code-area-wrapper .file-card {
+            flex: 1;
+            min-width: 0;
+        }
+        .code-area-wrapper textarea {
+            height: 100px;
+            min-height: 100px;
+            font-size: 0.7rem;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            justify-content: space-between;
+        }
+        .square-btn {
+            width: 80px;
+            height: 48px;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            transition: 0.05s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+        .square-btn:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); transform: scale(0.98); }
+        .square-btn.primary { background: var(--accent); color: white; }
+        .btn-test-green { color: #10b981; }
+        
+        /* Les trois textareas (manifest, sw) */
+        .inline-textareas {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+        .inline-textareas .file-card {
+            flex: 1;
+            min-width: 0;
+        }
+        .inline-textareas textarea {
+            height: 100px;
+            min-height: 100px;
+            font-size: 0.7rem;
+        }
+        .file-header { font-weight: bold; margin-bottom: 0.2rem; color: var(--text); font-size: 0.8rem; }
+        .result, #previewContainer { background: var(--code-bg); color: var(--text); border-radius: 0.5rem; padding: 0.6rem; margin: 0.8rem 0; box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); overflow: hidden; }
+        .error { background: #c7254e30; color: #c7254e; }
+        .checklist { background: var(--card); border-radius: 0.5rem; padding: 0.6rem; margin: 0.8rem 0; box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+        .checklist-item { display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0; font-size: 0.8rem; }
+        .checklist-item .status { width: 24px; text-align: center; }
+        .btn-link { display: inline-block; background: var(--btn-bg); color: var(--btn-text); padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; font-weight: bold; margin-top: 0.5rem; box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light); }
+        .preview { text-align: center; margin-top: 0.5rem; }
+        .preview img { max-width: 80px; border-radius: 0.5rem; margin: 0 auto; }
+        .footer { text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.7rem; }
+
+        /* Boutons pour manifest/sw */
+        .dot-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: normal;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            height: 28px;
+        }
+        .dot-button:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            box-shadow: 0 0 4px currentColor;
+            transition: background-color 0.2s;
+        }
+        .dot.green { background-color: #10b981; box-shadow: 0 0 6px #10b981; }
+        .files-tools { display: flex; gap: 0.8rem; margin: 0.5rem 0; }
+
+        /* Petit bouton token carré (aligné avec l'input) */
+        .token-paste-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 0.5rem;
+            background-color: #ef4444;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            cursor: pointer;
+            transition: 0.05s linear;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+        }
+        .token-paste-btn.green { background-color: #10b981; }
+        .token-paste-btn:active { box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); transform: scale(0.96); }
+        .repo-line { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
+        .repo-line .repo-field { flex: 1; }
+        #githubToken { display: none; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-backdrop);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: var(--code-bg);
+            color: var(--text);
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+        }
+        .modal-content textarea { flex: 1; margin: 0.5rem 0; min-height: 200px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+        .hidden-textarea { display: none; }
+
+        /* Correction plein écran : aucun bord blanc */
+        #previewContainer:fullscreen {
+            background: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #previewContainer:fullscreen #previewArea {
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #previewContainer:fullscreen #previewRoot {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Correction des couleurs des champs de saisie en mode sombre */
+        body.dark input,
+        body.dark textarea,
+        body.dark input::file-selector-button {
+            color: #e2e8f0 !important;
+            background-color: #0f172a !important;
+        }
+        body.dark input::placeholder,
+        body.dark textarea::placeholder {
+            color: #9aaebf !important;
+        }
+        body.dark input[type="file"] {
+            color: #e2e8f0;
+            background-color: #0f172a;
+        }
+        body.dark input[type="file"]::file-selector-button {
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .square-btn {
+                width: 70px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+
+    <!-- PWA Config Autoinjected -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4b6cb7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4b6cb7">
+<link rel="apple-touch-icon" href="icon.png"></head>
+<body>
+<div class="card">
+    <h1>⚛️ LB Reaactor <button class="dark-toggle" id="darkModeToggle">🌙 Dark</button></h1>
+    
+    <!-- Token GitHub caché -->
+    <input type="password" id="githubToken" placeholder="ghp_...">
+    
+    <!-- Zone de code React avec boutons coller/test -->
+    <div class="code-area-wrapper">
+        <div class="file-card">
+            <div class="file-header">📝 Code React (JSX/TSX)</div>
+            <textarea id="reactCode" spellcheck="false"></textarea>
+        </div>
+        <div class="action-buttons">
+            <button id="pasteCodeBtn" class="square-btn" title="Coller depuis le presse-papiers">📋 Coller</button>
+            <button id="runPreviewBtn" class="square-btn btn-test-green" style="font-weight: bold;">Test</button>
+        </div>
+    </div>
+    
+    <!-- Boutons pour manifest et sw -->
+    <div class="files-tools">
+        <button id="btnManifest" class="dot-button"><span class="dot" id="dotManifest"></span> manifest.json</button>
+        <button id="btnSw" class="dot-button"><span class="dot" id="dotSw"></span> sw.js</button>
+    </div>
+    
+    <!-- Textareas cachés pour stocker les contenus -->
+    <textarea id="manifestPreview" class="hidden-textarea"></textarea>
+    <textarea id="swPreview" class="hidden-textarea"></textarea>
+    
+    <!-- Zone d'aperçu -->
+    <div id="previewContainer" class="result">
+        <div id="previewArea">Aperçu</div>
+    </div>
+    
+    <!-- Ligne du dépôt et token -->
+    <div class="repo-line">
+        <div id="tokenPasteBtn" class="token-paste-btn" title="Coller le token GitHub (presse-papiers)">🔑</div>
+        <div class="repo-field">
+            <label>📁 Nom du dépôt GitHub</label>
+            <input type="text" id="repoName" value="">
+        </div>
+    </div>
+    
+    <label>🖼️ Icône de la PWA (PNG/JPG)</label>
+    <input type="file" id="iconInput" accept="image/png,image/jpeg" style="padding: 0.3rem;">
+    <div id="previewIcon" class="preview"></div>
+    
+    <div class="button-bar" style="display: flex; justify-content: center; margin-top: 0.5rem;">
+        <button id="deployBtn" style="background: var(--accent); color: white; padding: 0.6rem 1.2rem;">🚀 Deploy</button>
+    </div>
+    
+    <div id="checklistContainer" class="checklist" style="display:none;"></div>
+    <div id="finalLinkContainer" style="text-align:center"></div>
+    <div id="status" class="result" style="text-align:center; font-weight:bold;">Statut : Prêt.</div>
+    <div class="footer">Made by Laiche Brahim 2026 Paris</div>
+</div>
+
+<!-- Modal d'édition -->
+<div id="editorModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Édition</h3>
+        <textarea id="modalTextarea" spellcheck="false"></textarea>
+        <div class="modal-actions">
+            <button id="modalSaveBtn">💾 Sauvegarder</button>
+            <button id="modalCancelBtn">Annuler</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Gestion UI & Thème : mode sombre par défaut ---
+    const toggleDark = document.getElementById('darkModeToggle');
+    if (localStorage.getItem('darkMode') === null) {
+        localStorage.setItem('darkMode', 'true');
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
+    }
+    updateThemeBtn();
+    toggleDark.onclick = () => { 
+        document.body.classList.toggle('dark'); 
+        localStorage.setItem('darkMode', document.body.classList.contains('dark')); 
+        updateThemeBtn();
+    };
+    function updateThemeBtn() { toggleDark.innerText = document.body.classList.contains('dark') ? '☀️ Light' : '🌙 Dark'; }
+
+    // --- Éléments DOM ---
+    const reactCode = document.getElementById('reactCode');
+    const runPreviewBtn = document.getElementById('runPreviewBtn');
+    const pasteCodeBtn = document.getElementById('pasteCodeBtn');
+    const previewArea = document.getElementById('previewArea');
+    const statusDiv = document.getElementById('status');
+    const manifestPreview = document.getElementById('manifestPreview');
+    const swPreview = document.getElementById('swPreview');
+    const deployBtn = document.getElementById('deployBtn');
+    const tokenInput = document.getElementById('githubToken');
+    const repoInput = document.getElementById('repoName');
+    const checklistContainer = document.getElementById('checklistContainer');
+    const finalLinkContainer = document.getElementById('finalLinkContainer');
+    const previewContainerDiv = document.getElementById('previewContainer');
+    
+    const tokenPasteBtn = document.getElementById('tokenPasteBtn');
+    const btnManifest = document.getElementById('btnManifest');
+    const btnSw = document.getElementById('btnSw');
+    const dotManifest = document.getElementById('dotManifest');
+    const dotSw = document.getElementById('dotSw');
+    const modal = document.getElementById('editorModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalTextarea = document.getElementById('modalTextarea');
+    const modalSaveBtn = document.getElementById('modalSaveBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    
+    let uploadedImage = null;
+    let currentEditing = null;
+    
+    // Fonction pour coller dans le champ code React
+    async function pasteIntoReactCode() {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                reactCode.value = text;
+                showMessage("✅ Code collé depuis le presse-papiers.");
+                generateManifestAndSW();
+            } else {
+                showError("Le presse-papiers est vide.");
+            }
+        } catch (err) {
+            showError("Impossible d'accéder au presse-papiers. Autorisez l'accès.");
+        }
+    }
+    pasteCodeBtn.addEventListener('click', pasteIntoReactCode);
+    
+    function updateTokenButton() {
+        const token = tokenInput.value.trim();
+        if (token) {
+            tokenPasteBtn.classList.add('green');
+            tokenPasteBtn.style.backgroundColor = '#10b981';
+        } else {
+            tokenPasteBtn.classList.remove('green');
+            tokenPasteBtn.style.backgroundColor = '#ef4444';
+        }
+    }
+    
+    async function pasteTokenFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                tokenInput.value = text.trim();
+                updateTokenButton();
+                showMessage("✅ Token collé depuis le presse-papiers.");
+            } else {
+                showError("Le presse-papiers est vide.");
+            }
+        } catch (err) {
+            showError("Impossible d'accéder au presse-papiers. Autorisez l'accès.");
+        }
+    }
+    tokenPasteBtn.addEventListener('click', pasteTokenFromClipboard);
+    
+    let originalManifestContent = '';
+    let originalSwContent = '';
+    function updateDotManifest() {
+        const hasChanges = manifestPreview.value !== originalManifestContent;
+        dotManifest.classList.toggle('green', hasChanges);
+    }
+    function updateDotSw() {
+        const hasChanges = swPreview.value !== originalSwContent;
+        dotSw.classList.toggle('green', hasChanges);
+    }
+    function syncOriginalContents() {
+        originalManifestContent = manifestPreview.value;
+        originalSwContent = swPreview.value;
+        updateDotManifest();
+        updateDotSw();
+    }
+    
+    function generateManifestAndSW() {
+        const code = reactCode.value;
+        let titleMatch = code.match(/<h1[^>]*>([^<]*)<\/h1>/);
+        let appTitle = titleMatch ? titleMatch[1].trim() : "React App";
+        let shortName = appTitle.slice(0,12);
+        let icons = [];
+        if (uploadedImage) { 
+            const sizes = [72,96,128,144,152,192,384,512]; 
+            icons = sizes.map(s => ({ src: `icons/icon-${s}.png`, sizes: `${s}x${s}`, type: "image/png" })); 
+        }
+        const newManifest = JSON.stringify({ 
+            name: appTitle, short_name: shortName, start_url: ".", 
+            display: "standalone", theme_color: "#030712", background_color: "#030712", 
+            icons 
+        }, null, 2);
+        const cdnAssets = [
+            "https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js",
+            "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js",
+            "https://cdn.tailwindcss.com"
+        ];
+        const files = ['./', './index.html', './manifest.json', ...cdnAssets];
+        const newSw = `const CACHE="pwa-v2";\nconst FILES=${JSON.stringify(files)};\nself.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));\nself.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+        manifestPreview.value = newManifest;
+        swPreview.value = newSw;
+        originalManifestContent = newManifest;
+        originalSwContent = newSw;
+        updateDotManifest();
+        updateDotSw();
+    }
+    
+    function openModal(type) {
+        currentEditing = type;
+        if (type === 'manifest') {
+            modalTitle.innerText = 'Édition de manifest.json';
+            modalTextarea.value = manifestPreview.value;
+        } else {
+            modalTitle.innerText = 'Édition de sw.js';
+            modalTextarea.value = swPreview.value;
+        }
+        modal.style.display = 'flex';
+    }
+    function closeModal() { modal.style.display = 'none'; currentEditing = null; }
+    function saveModalContent() {
+        if (currentEditing === 'manifest') {
+            manifestPreview.value = modalTextarea.value;
+            originalManifestContent = manifestPreview.value;
+            updateDotManifest();
+        } else if (currentEditing === 'sw') {
+            swPreview.value = modalTextarea.value;
+            originalSwContent = swPreview.value;
+            updateDotSw();
+        }
+        closeModal();
+    }
+    btnManifest.addEventListener('click', () => openModal('manifest'));
+    btnSw.addEventListener('click', () => openModal('sw'));
+    modalSaveBtn.addEventListener('click', saveModalContent);
+    modalCancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    
+    // --- Moteur de Préparation et Compilation ---
+    function extractComponentName(code) {
+        const exportMatch = code.match(/export\s+default\s+([a-zA-Z0-9_]+)/);
+        if (exportMatch) return exportMatch[1];
+        const componentMatch = code.match(/(?:function|const)\s+([A-Z]\w*)\s*(?:=|:\s*React\.FC|\()/);
+        if (componentMatch) return componentMatch[1];
+        return "App";
+    }
+    function cleanImportsAndExports(code) {
+        let cleaned = code.replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?\s*/g, '');
+        cleaned = cleaned.replace(/export\s+default\s+[a-zA-Z0-9_]+;?\s*/g, '');
+        cleaned = cleaned.replace(/^export\s+/gm, '');
+        return cleaned;
+    }
+    function scopeReactHooks(code) {
+        const hooks = ['useState', 'useEffect', 'useRef', 'useContext', 'useReducer', 'useCallback', 'useMemo'];
+        let scoped = code;
+        hooks.forEach(hook => {
+            const regex = new RegExp(`\\b${hook}\\b`, 'g');
+            scoped = scoped.replace(regex, `React.${hook}`);
+        });
+        return scoped;
+    }
+    function prepareCode(code) {
+        const mainComponent = extractComponentName(code);
+        let cleanCode = cleanImportsAndExports(code);
+        cleanCode = scopeReactHooks(cleanCode);
+        cleanCode += `\n\nconst previewRoot = document.getElementById('previewRoot');\nif(previewRoot){\n  const root = ReactDOM.createRoot(previewRoot);\n  root.render(<${mainComponent} />);\n}`;
+        return cleanCode;
+    }
+    function prepareCodeForProd(code) {
+        const mainComponent = extractComponentName(code);
+        let cleanCode = cleanImportsAndExports(code);
+        cleanCode = scopeReactHooks(cleanCode);
+        cleanCode += `\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(<${mainComponent} />);`;
+        return cleanCode;
+    }
+    function compileJSX(code) {
+        try {
+            const result = Babel.transform(code, { filename: 'component.tsx', presets: ['react', 'typescript'] });
+            return result.code;
+        } catch (err) { throw new Error(err.message); }
+    }
+    
+    // Assure que Babel est chargé (pour le déploiement)
+    let babelLoaded = false;
+    function ensureBabel() {
+        if (typeof Babel !== 'undefined') return Promise.resolve();
+        if (babelLoaded) return Promise.resolve(); // déjà en cours
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js';
+            script.onload = () => { babelLoaded = true; resolve(); };
+            script.onerror = () => reject(new Error("Impossible de charger Babel"));
+            document.head.appendChild(script);
+        });
+    }
+    
+    function ensureReactAndRun() {
+        if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && typeof Babel !== 'undefined') { runInPreview(); return; }
+        statusDiv.innerText = "📦 Chargement de React, ReactDOM & Babel...";
+        const loadScript = (src) => new Promise((resolve, reject) => { 
+            const s = document.createElement('script'); s.src = src; s.onload = resolve; s.onerror = reject; document.head.appendChild(s); 
+        });
+        Promise.all([
+            loadScript('https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js'),
+            loadScript('https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js'),
+            loadScript('https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js')
+        ]).then(() => { statusDiv.innerText = "✅ Librairies prêtes."; runInPreview(); }).catch(err => { showError("Erreur d'initialisation des CDN."); });
+    }
+    function runInPreview() {
+        const rawCode = reactCode.value.trim();
+        if (!rawCode) return showError("Le champ de code est vide.");
+        try {
+            previewArea.innerHTML = '<div id="previewRoot"></div>';
+            const prepared = prepareCode(rawCode);
+            const compiled = compileJSX(prepared);
+            new Function('React', 'ReactDOM', 'document', compiled)(React, ReactDOM, document);
+            showMessage("✅ Rendu généré avec succès.");
+        } catch (err) {
+            previewArea.innerHTML = `<div style='color:#ef4444; padding:0.5rem; font-family:monospace;'><b>Erreur :</b><br>${err.message}</div>`;
+            showError("Échec du rendu.");
+        }
+    }
+    
+    // Gestion du plein écran sans bordures + long press pour quitter
+    let fullscreenLongPressTimer = null;
+    function toggleFullscreenPreview() {
+        if (!previewContainerDiv) return;
+        if (!document.fullscreenElement) {
+            previewContainerDiv.requestFullscreen().catch(e => console.warn(e));
+            const previewElem = document.getElementById('previewArea');
+            if (previewElem) {
+                const startLongPress = (e) => {
+                    fullscreenLongPressTimer = setTimeout(() => {
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen();
+                        }
+                    }, 500);
+                };
+                const cancelLongPress = () => {
+                    if (fullscreenLongPressTimer) {
+                        clearTimeout(fullscreenLongPressTimer);
+                        fullscreenLongPressTimer = null;
+                    }
+                };
+                previewElem.addEventListener('touchstart', startLongPress);
+                previewElem.addEventListener('touchend', cancelLongPress);
+                previewElem.addEventListener('touchmove', cancelLongPress);
+                previewElem.addEventListener('touchcancel', cancelLongPress);
+                previewElem.addEventListener('mousedown', startLongPress);
+                previewElem.addEventListener('mouseup', cancelLongPress);
+                const fullscreenChangeHandler = () => {
+                    if (!document.fullscreenElement) {
+                        previewElem.removeEventListener('touchstart', startLongPress);
+                        previewElem.removeEventListener('touchend', cancelLongPress);
+                        previewElem.removeEventListener('touchmove', cancelLongPress);
+                        previewElem.removeEventListener('touchcancel', cancelLongPress);
+                        previewElem.removeEventListener('mousedown', startLongPress);
+                        previewElem.removeEventListener('mouseup', cancelLongPress);
+                        document.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+                    }
+                };
+                document.addEventListener('fullscreenchange', fullscreenChangeHandler);
+            }
+        } else {
+            document.exitFullscreen();
+        }
+    }
+    
+    runPreviewBtn.addEventListener('click', () => { ensureReactAndRun(); toggleFullscreenPreview(); });
+    
+    const iconInput = document.getElementById('iconInput');
+    const previewIcon = document.getElementById('previewIcon');
+    iconInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+            uploadedImage = file;
+            const reader = new FileReader();
+            reader.onload = (ev) => previewIcon.innerHTML = `<img src="${ev.target.result}">`;
+            reader.readAsDataURL(file);
+            generateManifestAndSW();
+        } else if (file) { uploadedImage = null; previewIcon.innerHTML = ''; showError("Format invalide (PNG/JPG uniquement)."); }
+    });
+    
+    reactCode.value = '';
+    generateManifestAndSW();
+    reactCode.addEventListener('input', generateManifestAndSW);
+    
+    function generateIndexHtml(code) {
+        const processedCode = prepareCodeForProd(code);
+        const compiled = compileJSX(processedCode);
+        const safeCompiled = compiled.replace(/<\/script>/gi, '<\\/script>');
+        return `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>PWA App</title><link rel="manifest" href="manifest.json"><script src="https://cdn.tailwindcss.com"><\/script><style>body{margin:0;padding:0;background-color:#030712;font-family:system-ui;min-height:100vh;display:flex;align-items:center;justify-content:center;}#root{width:100%;display:flex;justify-content:center;align-items:center;}</style></head><body><div id="root"></div><script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"><\/script><script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"><\/script><script>${safeCompiled}<\/script><script>if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');<\/script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}</script>
+</body></html>`;
+    }
+    
+    const ICON_SIZES = [72,96,128,144,152,192,384,512];
+    function resizeToBlob(file, w, h) { return new Promise((resolve, reject) => { const img = new Image(); const url = URL.createObjectURL(file); img.onload = () => { URL.revokeObjectURL(url); const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); canvas.toBlob(b => b ? resolve(b) : reject(), 'image/png'); }; img.onerror = reject; img.src = url; }); }
+    async function generateIcons(file) { const map = new Map(); for (const size of ICON_SIZES) { const blob = await resizeToBlob(file, size, size); map.set(size, { blob, filename: `icon-${size}.png` }); } return map; }
+    async function getGitHubUser(token) { const res = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${token}` } }); if (!res.ok) throw new Error('Token invalide'); return (await res.json()).login; }
+    async function createRepo(owner, repo, token) { const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: repo, private: false, auto_init: false }) }); if (!res.ok) { const err = await res.json(); if (err.message.includes('already exists')) throw new Error('EXISTS'); throw new Error(err.message); } }
+    async function uploadFile(owner, repo, path, base64, token, msg) { const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, { method: 'PUT', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, content: base64, branch: 'main' }) }); if (!res.ok) throw new Error(`Upload ${path} failed`); }
+    async function enablePages(owner, repo, token) { const url = `https://api.github.com/repos/${owner}/${repo}/pages`; for (const branch of ['main', 'master']) { const res = await fetch(url, { method: 'POST', headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch, path: '/' } }) }); if (res.status === 201 || res.status === 204 || res.status === 409) return true; const err = await res.json(); if (err.message && err.message.includes('must be one of')) continue; throw new Error(err.message || "Erreur activation"); } throw new Error("Impossible d'activer GitHub Pages"); }
+    async function waitForSiteReady(url, maxAttempts = 35, interval = 2500) { for (let i=0; i<maxAttempts; i++) { try { const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 5000); const res = await fetch(url, { method: 'GET', signal: controller.signal }); clearTimeout(timeout); if (res.status === 200) return true; } catch(e) {} await new Promise(r => setTimeout(r, interval)); } return false; }
+    
+    function updateChecklist(step, status, message = '') { 
+        checklistContainer.style.display = 'block';
+        if (checklistContainer.children.length === 0) { 
+            const steps = ['token','icons','repo','uploadIndex','uploadManifest','uploadSw','uploadIcons','pages','wait']; 
+            steps.forEach(s => { const div = document.createElement('div'); div.className = 'checklist-item pending'; div.id = `check-${s}`; div.innerHTML = `<span class="status">⏳</span><span>${getStepLabel(s)}</span><span class="message" style="margin-left:auto; font-size:0.75rem;"></span>`; checklistContainer.appendChild(div); }); 
+        } 
+        const item = document.getElementById(`check-${step}`); if (item) { item.className = `checklist-item ${status}`; item.querySelector('.status').textContent = status === 'success' ? '✅' : (status === 'error' ? '❌' : '⏳'); if (message) item.querySelector('.message').textContent = message; } 
+    }
+    function getStepLabel(step) { const labels = { token:'🔑 Vérification Token', icons:'🎨 Génération icônes', repo:'📁 Dépôt distant', uploadIndex:'📄 index.html', uploadManifest:'📄 manifest.json', uploadSw:'⚙️ sw.js', uploadIcons:'🖼️ Icônes', pages:'🌐 Activation Pages', wait:'⏳ Propagation DNS' }; return labels[step]; }
+    function resetChecklist() { checklistContainer.innerHTML = ''; checklistContainer.style.display = 'none'; }
+    function strToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+    function blobToBase64(blob) { return new Promise(resolve => { const r = new FileReader(); r.onloadend = () => resolve(r.result.split(',')[1]); r.readAsDataURL(blob); }); }
+    function showMessage(msg) { statusDiv.innerHTML = msg; statusDiv.classList.remove('error'); }
+    function showError(msg) { statusDiv.innerHTML = `❌ ${msg}`; statusDiv.classList.add('error'); }
+    
+    deployBtn.onclick = async () => {
+        const token = tokenInput.value.trim(); const repo = repoInput.value.trim(); const code = reactCode.value.trim();
+        if (!token || !repo || !code || !uploadedImage) return showError("Token, dépôt, code et icône requis.");
+        deployBtn.disabled = true; resetChecklist(); finalLinkContainer.innerHTML = ''; showMessage("🚀 Déploiement...");
+        try {
+            // Charger Babel si nécessaire (pour la compilation JSX)
+            await ensureBabel();
+            
+            updateChecklist('token','pending'); const owner = await getGitHubUser(token); updateChecklist('token','success',`@${owner}`);
+            updateChecklist('icons','pending'); const iconsMap = await generateIcons(uploadedImage); updateChecklist('icons','success',`${iconsMap.size} icônes`);
+            updateChecklist('repo','pending'); try { await createRepo(owner, repo, token); updateChecklist('repo','success','créé'); } catch(e) { if (e.message === 'EXISTS') updateChecklist('repo','success','existant'); else throw e; }
+            const finalIndex = generateIndexHtml(code); const finalManifest = manifestPreview.value; const finalSw = swPreview.value;
+            updateChecklist('uploadIndex','pending'); await uploadFile(owner, repo, "index.html", strToBase64(finalIndex), token, "Add index"); updateChecklist('uploadIndex','success');
+            updateChecklist('uploadManifest','pending'); await uploadFile(owner, repo, "manifest.json", strToBase64(finalManifest), token, "Add manifest"); updateChecklist('uploadManifest','success');
+            updateChecklist('uploadSw','pending'); await uploadFile(owner, repo, "sw.js", strToBase64(finalSw), token, "Add sw"); updateChecklist('uploadSw','success');
+            updateChecklist('uploadIcons','pending'); for (let [size, { blob, filename }] of iconsMap.entries()) { const b64 = await blobToBase64(blob); await uploadFile(owner, repo, `icons/${filename}`, b64, token, `Icon ${size}`); } updateChecklist('uploadIcons','success');
+            updateChecklist('pages','pending'); await enablePages(owner, repo, token); updateChecklist('pages','success');
+            const siteUrl = `https://${owner}.github.io/${repo}/`; updateChecklist('wait','pending'); showMessage("⏳ Attente déploiement...");
+            const ready = await waitForSiteReady(siteUrl, 40, 2500);
+            if (ready) { 
+                updateChecklist('wait','success','En ligne'); 
+                finalLinkContainer.innerHTML = `<a href="${siteUrl}" target="_blank" class="btn-link">🔗 ${repo}</a>`; 
+                showMessage(`✅ Déploiement terminé.`); 
+            } else { 
+                updateChecklist('wait','error','Délai'); 
+                finalLinkContainer.innerHTML = `<a href="${siteUrl}" target="_blank" class="btn-link">🔗 ${repo}</a>`; 
+                showMessage(`⚠️ Site bientôt disponible : ${siteUrl}`); 
+            }
+        } catch (err) { showError(`Erreur : ${err.message}`); const lastPending = Array.from(document.querySelectorAll('.checklist-item.pending')).pop(); if (lastPending) updateChecklist(lastPending.id.replace('check-',''), 'error', err.message); }
+        finally { deployBtn.disabled = false; }
+    };
+    
+    updateTokenButton();
+    syncOriginalContents();
+</script>
+
+    <!-- PWA Service Worker Autoinjected -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Reaactorbeta SW enregistré avec succès !'))
+            .catch(err => console.error('Erreur d’enregistrement du SW :', err));
+        });
+      }
+    </script>
+    </body></html>
