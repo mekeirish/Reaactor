@@ -160,31 +160,12 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
         .hidden-textarea { display: none; }
 
-        /* Plein écran : fond noir */
+        /* Correction 1 : Plein écran avec fond blanc pour voir les erreurs */
         #previewContainer:fullscreen {
-            background: black !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #previewContainer:fullscreen #previewArea {
-            width: 100%;
-            height: 100%;
-            background: black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #previewContainer:fullscreen #previewRoot {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: white !important;
+            color: black !important;
+            padding: 20px;
+            overflow: auto;
         }
 
         /* Bouton global de sortie plein écran (caché par défaut) */
@@ -558,18 +539,26 @@
             loadScript('https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js')
         ]).then(() => { statusDiv.innerText = "✅ Librairies prêtes."; runInPreview(); }).catch(err => { showError("Erreur d'initialisation des CDN."); });
     }
+
+    // Correction 2 : fonction runInPreview avec affichage d'erreur clair et visible
     function runInPreview() {
         const rawCode = reactCode.value.trim();
         if (!rawCode) return showError("Le champ de code est vide.");
+        
         try {
             previewArea.innerHTML = '<div id="previewRoot"></div>';
             const prepared = prepareCode(rawCode);
             const compiled = compileJSX(prepared);
             new Function('React', 'ReactDOM', 'document', compiled)(React, ReactDOM, document);
-            showMessage("✅ Rendu généré avec succès.");
+            showMessage("✅ Rendu généré.");
         } catch (err) {
-            previewArea.innerHTML = `<div style='color:#ef4444; padding:0.5rem; font-family:monospace;'><b>Erreur :</b><br>${err.message}</div>`;
-            showError("Échec du rendu.");
+            // Affichage détaillé de l'erreur dans le conteneur
+            previewArea.innerHTML = `
+                <div style="color: red; padding: 20px; font-family: monospace;">
+                    <h3 style="font-weight:bold;">⚠️ Erreur de code détectée :</h3>
+                    <p>${err.message}</p>
+                </div>`;
+            showError("Échec du rendu. Voir l'erreur ci-dessus.");
         }
     }
     
