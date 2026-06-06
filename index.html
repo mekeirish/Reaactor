@@ -160,12 +160,35 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
         .hidden-textarea { display: none; }
 
-        /* Correction 1 : Plein écran avec fond blanc pour voir les erreurs */
+        /* CORRECTION PLEIN ÉCRAN : suppression des marges, fond #0f172a, occupation totale */
         #previewContainer:fullscreen {
-            background: white !important;
-            color: black !important;
-            padding: 20px;
-            overflow: auto;
+            background: #0f172a !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #previewContainer:fullscreen #previewArea,
+        #previewContainer:fullscreen #previewRoot {
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #previewContainer:fullscreen > * {
+            width: 100%;
+            height: 100%;
+        }
+        /* Pour que le Dashboard occupe tout l'espace sans aucune bordure */
+        #previewContainer:fullscreen #previewArea > div,
+        #previewContainer:fullscreen #previewRoot > div {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100vh !important;
         }
 
         /* Bouton global de sortie plein écran (caché par défaut) */
@@ -357,6 +380,7 @@
                 reactCode.value = text;
                 showMessage("✅ Code collé depuis le presse-papiers.");
                 generateManifestAndSW();
+                localStorage.setItem('lb-reaactor-code', text);
             } else {
                 showError("Le presse-papiers est vide.");
             }
@@ -484,7 +508,6 @@
         cleaned = cleaned.replace(/^export\s+/gm, '');
         return cleaned;
     }
-    // Fonction scopeReactHooks conservée mais plus utilisée (correction)
     function scopeReactHooks(code) {
         const hooks = ['useState', 'useEffect', 'useRef', 'useContext', 'useReducer', 'useCallback', 'useMemo'];
         let scoped = code;
@@ -505,7 +528,6 @@
     function prepareCodeForProd(code) {
         const mainComponent = extractComponentName(code);
         let cleanCode = cleanImportsAndExports(code);
-        // On garde la même correction pour la version prod (pas de scopeReactHooks)
         // cleanCode = scopeReactHooks(cleanCode);  // SUPPRIMÉ
         cleanCode += `\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(<${mainComponent} />);`;
         return cleanCode;
@@ -589,9 +611,22 @@
         } else if (file) { uploadedImage = null; previewIcon.innerHTML = ''; showError("Format invalide (PNG/JPG uniquement)."); }
     });
     
-    reactCode.value = '';
+    // --- Sauvegarde automatique dans LocalStorage ---
+    // Au chargement, restaurer le code sauvegardé
+    const savedCode = localStorage.getItem('lb-reaactor-code');
+    if (savedCode !== null) {
+        reactCode.value = savedCode;
+    } else {
+        reactCode.value = '';
+    }
+    // Générer le manifest et le sw après restauration
     generateManifestAndSW();
-    reactCode.addEventListener('input', generateManifestAndSW);
+    // Écouter les modifications pour sauvegarder dans localStorage
+    reactCode.addEventListener('input', () => {
+        const code = reactCode.value;
+        localStorage.setItem('lb-reaactor-code', code);
+        generateManifestAndSW(); // met à jour manifest et sw à chaque changement
+    });
     
     function generateIndexHtml(code) {
         const processedCode = prepareCodeForProd(code);
