@@ -484,6 +484,7 @@
         cleaned = cleaned.replace(/^export\s+/gm, '');
         return cleaned;
     }
+    // Fonction scopeReactHooks conservée mais plus utilisée (correction)
     function scopeReactHooks(code) {
         const hooks = ['useState', 'useEffect', 'useRef', 'useContext', 'useReducer', 'useCallback', 'useMemo'];
         let scoped = code;
@@ -493,17 +494,19 @@
         });
         return scoped;
     }
+    // CORRECTION : suppression de l'appel à scopeReactHooks dans prepareCode
     function prepareCode(code) {
         const mainComponent = extractComponentName(code);
         let cleanCode = cleanImportsAndExports(code);
-        cleanCode = scopeReactHooks(cleanCode);
+        // cleanCode = scopeReactHooks(cleanCode);  // LIGNE SUPPRIMÉE
         cleanCode += `\n\nconst previewRoot = document.getElementById('previewRoot');\nif(previewRoot){\n  const root = ReactDOM.createRoot(previewRoot);\n  root.render(<${mainComponent} />);\n}`;
         return cleanCode;
     }
     function prepareCodeForProd(code) {
         const mainComponent = extractComponentName(code);
         let cleanCode = cleanImportsAndExports(code);
-        cleanCode = scopeReactHooks(cleanCode);
+        // On garde la même correction pour la version prod (pas de scopeReactHooks)
+        // cleanCode = scopeReactHooks(cleanCode);  // SUPPRIMÉ
         cleanCode += `\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(<${mainComponent} />);`;
         return cleanCode;
     }
